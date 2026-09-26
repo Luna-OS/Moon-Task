@@ -26,9 +26,21 @@ final class SamplerTests: XCTestCase {
         let launchd = s.processes.first { $0.pid == 1 }
         XCTAssertEqual(launchd?.name, "launchd")
         XCTAssertTrue(launchd?.isProtected ?? false)
-        XCTAssertGreaterThan(launchd?.memory ?? 0, 0, "rusage works for other users' processes")
+        XCTAssertGreaterThan(launchd?.memory ?? 0, 0, "other users' processes have their memory (via ps)")
 
         XCTAssertFalse(s.volumes.isEmpty)
+    }
+
+    func testParsesPS() {
+        let usage = Sampler.parsePS("""
+            1  12345   0:42.50
+          412   2048 1-02:03:04.00
+            7     10   123:45.67
+        """)
+        XCTAssertEqual(usage[1]?.resident, 12345 * 1024)
+        XCTAssertEqual(usage[1]?.cpuNs, 42_500_000_000)
+        XCTAssertEqual(usage[412]?.cpuNs, UInt64((86_400 + 2 * 3600 + 3 * 60 + 4) * 1e9))
+        XCTAssertEqual(Sampler.parseCPUTime("123:45.67")!, 7425.67, accuracy: 0.001)
     }
 
     func testSystemInfo() {

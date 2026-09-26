@@ -100,6 +100,11 @@ public final class Sampler {
         })
         guard count > 0 else { return [] }
 
+        // macOS only shows the resource usage of other users' processes to
+        // root. /bin/ps is allowed to read it (it's setuid root), so for
+        // those processes MoonTask asks ps, once per refresh.
+        var others: [Int32: PSUsage]?
+
         var rows: [ProcessRow] = []
         rows.reserveCapacity(count)
         var cpuNow: [ProcessIdentity: UInt64] = [:]
@@ -115,6 +120,14 @@ public final class Sampler {
 
             var usage = mt_usage()
             mt_process_usage(pid, &usage)
+            if usage.ok == 0 && pid != 0 {
+                if others == nil { others = Self.psUsage() }
+                if let ps = others?[pid] {
+                    usage.ok = 1
+                    usage.cpu_ns = ps.cpuNs
+                    usage.resident = ps.resident
+                }
+            }
 
             var cpu = 0.0
             var read = 0.0, written = 0.0
@@ -171,6 +184,54 @@ public final class Sampler {
         let alive = Set(rows.map(\.identity))
         paths = paths.filter { alive.contains($0.key) }
         return rows
+    }
+
+    struct PSUsage {
+        var resident: UInt64
+        var cpuNs: UInt64
+    }
+
+    /// Resident memory and CPU time of every process, from `ps`.
+    static func psUsage() -> [Int32: PSUsage] {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/ps")
+        process.arguments = ["-axo", "pid=,rss=,time="]
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+        do { try process.run() } catch { return [:] }
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        return parsePS(String(decoding: data, as: UTF8.self))
+    }
+
+    static func parsePS(_ output: String) -> [Int32: PSUsage] {
+        var out: [Int32: PSUsage] = [:]
+        for line in output.split(separator: "\n") {
+            let fields = line.split(separator: " ", omittingEmptySubsequences: true)
+            guard fields.count >= 3, let pid = Int32(fields[0]), let rssKB = UInt64(fields[1]),
+                  let seconds = parseCPUTime(String(fields[2]))
+            else { continue }
+            out[pid] = PSUsage(resident: rssKB * 1024, cpuNs: UInt64(seconds * 1e9))
+        }
+        return out
+    }
+
+    /// ps' CPU time: "[[dd-]hh:]mm:ss.ss".
+    static func parseCPUTime(_ text: String) -> Double? {
+        var days = 0.0
+        var rest = Substring(text)
+        if let dash = rest.firstIndex(of: "-") {
+            guard let d = Double(rest[..<dash]) else { return nil }
+            days = d
+            rest = rest[rest.index(after: dash)...]
+        }
+        var total = 0.0
+        for part in rest.split(separator: ":") {
+            guard let v = Double(part) else { return nil }
+            total = total * 60 + v
+        }
+        return days * 86_400 + total
     }
 
     private func path(for identity: ProcessIdentity) -> String? {
