@@ -40,6 +40,8 @@ export interface ProcessRow {
   status: ProcessState;
   /** Share of the whole machine, 0–100. */
   cpu: number;
+  /** GPU load, 0–100 (busiest engine); null where the platform can't tell. */
+  gpu: number | null;
   memory: number;
   virtualMemory: number;
   threads: number | null;
@@ -76,6 +78,7 @@ export interface Snapshot {
   };
   disk: { readRate: number; writeRate: number; volumes: Volume[] };
   sensors: Sensor[];
+  gpus: Gpu[];
   processes: ProcessRow[];
   processCount: number;
   threadCount: number;
@@ -98,6 +101,24 @@ export interface Volume {
   available: number;
   removable: boolean;
   kind: "ssd" | "hdd" | "unknown";
+}
+
+export interface GpuEngine {
+  name: string;
+  utilization: number;
+}
+
+export interface Gpu {
+  name: string;
+  vendor: string | null;
+  /** 0–100, the busiest engine's load. */
+  utilization: number | null;
+  engines: GpuEngine[];
+  memoryUsed: number | null;
+  memoryTotal: number | null;
+  sharedUsed: number | null;
+  sharedTotal: number | null;
+  temperature: number | null;
 }
 
 export interface Sensor {

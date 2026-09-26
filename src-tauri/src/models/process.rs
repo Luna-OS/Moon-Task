@@ -21,6 +21,9 @@ pub struct ProcessRow {
     /// CPU usage as a share of the *whole machine*, 0–100 (not per core
     /// like `top`, so the column always adds up to the CPU total).
     pub cpu: f32,
+    /// GPU load of this process, 0–100 (its busiest engine); `None` where
+    /// the platform can't attribute GPU load to processes.
+    pub gpu: Option<f32>,
     /// Resident memory in bytes.
     pub memory: u64,
     pub virtual_memory: u64,

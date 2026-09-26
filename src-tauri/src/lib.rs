@@ -9,6 +9,7 @@
 #[cfg(feature = "gui")]
 pub mod commands;
 pub mod control;
+pub mod gpu;
 pub mod models;
 pub mod monitor;
 pub mod network;

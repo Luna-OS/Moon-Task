@@ -386,10 +386,15 @@ function General({
 }) {
   return (
     <div className="flex flex-col gap-4 p-4">
-      <div className="grid grid-cols-2 gap-3">
+      <div className={`grid gap-3 ${row.gpu !== null ? "grid-cols-3" : "grid-cols-2"}`}>
         <MiniStat label="CPU" value={formatPercent(row.cpu)}>
           <Sparkline values={history?.cpu ?? []} max={100} capacity={60} height={32} />
         </MiniStat>
+        {row.gpu !== null && (
+          <MiniStat label="GPU" value={formatPercent(row.gpu)}>
+            <Sparkline values={history?.gpu ?? []} max={100} capacity={60} height={32} />
+          </MiniStat>
+        )}
         <MiniStat label="Memory" value={formatBytes(row.memory)}>
           <Sparkline values={history?.memory ?? []} capacity={60} height={32} tone={2} />
         </MiniStat>

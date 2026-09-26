@@ -6,6 +6,7 @@ import { ACTION_LABELS, isAllowed, needsConfirmation } from "@/lib/risk";
 import { loadSettings, resolveTheme, saveSettings, type Settings } from "@/lib/settings";
 import { formatBytes, formatDuration, formatPercent } from "@/lib/format";
 import { PRIORITY_LABELS } from "@/lib/labels";
+import { primaryGpu } from "@/lib/gpu";
 import type {
   Platform,
   ProcessAction,
@@ -359,6 +360,7 @@ export default function App() {
   const current = VIEWS.find((v) => v.id === view)!;
   const mem = snapshot?.memory;
   const memFraction = mem && mem.total > 0 ? mem.used / mem.total : 0;
+  const gpu = snapshot ? primaryGpu(snapshot) : null;
 
   const content = view;
 
@@ -417,6 +419,13 @@ export default function App() {
               value={mem ? `${formatBytes(mem.used)} / ${formatBytes(mem.total, 0)}` : "–"}
               fraction={memFraction}
             />
+            {gpu && gpu.card.utilization !== null && (
+              <SideGauge
+                label="GPU"
+                value={formatPercent(gpu.card.utilization, 0)}
+                fraction={gpu.card.utilization / 100}
+              />
+            )}
           </div>
         </aside>
 

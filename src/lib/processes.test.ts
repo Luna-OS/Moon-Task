@@ -133,6 +133,18 @@ describe("apps mode", () => {
     expect(rows.find((r) => r.process.name === "vim")?.kind).toBe("process");
   });
 
+  it("sums GPU load in a group, capped at 100", () => {
+    const g = aggregate("x", [proc({ pid: 1, gpu: 70 }), proc({ pid: 2, gpu: 50 })]);
+    expect(g.gpu).toBe(100);
+    expect(aggregate("y", [proc({ pid: 1, gpu: null })]).gpu).toBeNull();
+  });
+
+  it("sorts by GPU with unknown values last", () => {
+    const rows = [proc({ pid: 1, gpu: null }), proc({ pid: 2, gpu: 5 }), proc({ pid: 3, gpu: 40 })];
+    const sorted = visibleRows(rows, { ...base, mode: "list", sort: { key: "gpu", dir: "desc" } });
+    expect(sorted.map((r) => r.process.pid)).toEqual([3, 2, 1]);
+  });
+
   it("marks a group protected only if every member is", () => {
     expect(aggregate("x", [proc({ pid: 1, protected: true }), proc({ pid: 2 })]).protected).toBe(
       false,

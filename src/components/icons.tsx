@@ -224,3 +224,11 @@ export const CpuIcon = () => (
     <path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4" />
   </Svg>
 );
+
+export const GpuIcon = () => (
+  <Svg>
+    <rect x="2" y="6" width="20" height="12" rx="2" />
+    <circle cx="9" cy="12" r="3" />
+    <path d="M15 10h4M15 14h4M5 18v2M9 18v2M13 18v2" />
+  </Svg>
+);

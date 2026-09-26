@@ -26,8 +26,11 @@ better organized and in the same night-sky design as [MoonDisk](https://github.c
   loaded modules, open handles, its network connections and environment variables
 - **Actions**: end, force kill, end the whole process tree, suspend, resume, change priority,
   show the executable in the file manager
-- **Performance** — CPU (total and per core), memory and swap, disk and network throughput over
-  time with hover read-outs, volumes, and temperature sensors
+- **GPU** — load per graphics card and engine (3D, video decode/encode, copy …), dedicated and
+  shared video memory, temperature where reported, and a **GPU column per process** (Windows:
+  the same performance counters Task Manager uses; Linux: NVML for NVIDIA, sysfs for AMD/Intel)
+- **Performance** — CPU (total and per core), memory and swap, GPU, disk and network throughput
+  over time with hover read-outs, volumes, and temperature sensors
 - **Network** — every open TCP/UDP connection and listening port, with the process holding it
 - **Services** — systemd services (Linux) and Windows services: state, startup type, main
   process; start, stop and restart
@@ -96,6 +99,8 @@ but aren't built, tested or released yet.
 | Priority                      | ✓ (nice, all threads) | ✓ (priority class) |
 | Threads / modules             | ✓     | ✓       |
 | Open handles                  | ✓     | planned |
+| GPU load, memory              | ✓ (NVIDIA, AMD; Intel: name, temperature) | ✓ (all vendors) |
+| GPU load per process          | ✓ (NVIDIA) | ✓       |
 | Network connections           | ✓     | ✓       |
 | Services                      | systemd | Service Control Manager |
 | Temperatures                  | ✓     | –       |

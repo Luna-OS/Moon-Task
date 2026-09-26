@@ -16,6 +16,8 @@ interface Column {
   title?: string;
   /** Hidden while the detail panel takes space (it shows these anyway). */
   secondary?: boolean;
+  /** Only shown where the platform reports per-process GPU load. */
+  gpu?: boolean;
 }
 
 const COLUMNS: Column[] = [
@@ -28,6 +30,14 @@ const COLUMNS: Column[] = [
     width: "5.5rem",
     align: "right",
     title: "Share of the whole machine, so the column adds up to the CPU total",
+  },
+  {
+    key: "gpu",
+    label: "GPU",
+    width: "5rem",
+    align: "right",
+    title: "Load on the busiest GPU engine this process uses",
+    gpu: true,
   },
   { key: "memory", label: "Memory", width: "6.5rem", align: "right", title: "Resident memory" },
   { key: "threads", label: "Threads", width: "5rem", align: "right", secondary: true },
@@ -54,6 +64,8 @@ export interface ProcessTableProps {
   onEnd: (row: VisibleRow, force: boolean) => void;
   /** Fewer columns, for when the detail panel is open. */
   compact?: boolean;
+  /** Show the GPU column (the platform reports per-process GPU load). */
+  showGpu?: boolean;
 }
 
 export function ProcessTable({
@@ -66,8 +78,9 @@ export function ProcessTable({
   onToggle,
   onEnd,
   compact = false,
+  showGpu = false,
 }: ProcessTableProps) {
-  const columns = compact ? COLUMNS.filter((c) => !c.secondary) : COLUMNS;
+  const columns = COLUMNS.filter((c) => !(compact && c.secondary) && (showGpu || !c.gpu));
   const scroller = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [viewport, setViewport] = useState(600);
@@ -208,6 +221,7 @@ export function ProcessTable({
               onSelect={onSelect}
               onToggle={onToggle}
               compact={compact}
+              showGpu={showGpu}
             />
           ))}
           {end < rows.length && (
@@ -217,6 +231,13 @@ export function ProcessTable({
       </table>
     </div>
   );
+}
+
+/** A calm heat-map tint for load cells, like Task Manager's columns. */
+function heatStyle(load: number) {
+  if (load < 0.5) return undefined;
+  const strength = Math.round(8 + Math.min(load, 50) * 0.8);
+  return { background: `color-mix(in srgb, var(--mt-chart-1) ${strength}%, transparent)` };
 }
 
 /** A DOM id for a row; process names never end up in it. */
@@ -232,10 +253,12 @@ function Row({
   onSelect,
   onToggle,
   compact,
+  showGpu,
 }: {
   row: VisibleRow;
   index: number;
   compact: boolean;
+  showGpu: boolean;
   selected: boolean;
   fresh: boolean;
   onSelect: (row: VisibleRow) => void;
@@ -244,6 +267,7 @@ function Row({
   const p = row.process;
   const group = row.kind === "group";
   const heat = Math.min(100, p.cpu);
+  const gpuHeat = Math.min(100, p.gpu ?? 0);
   return (
     <tr
       id={rowDomId(row.id)}
@@ -296,20 +320,14 @@ function Row({
       </td>
       <td className="text-right text-(--mt-text-muted)">{group ? "" : p.pid}</td>
       {!compact && <td className="text-(--mt-text-muted)">{p.user ?? "–"}</td>}
-      <td
-        className="text-right"
-        style={
-          heat >= 0.5
-            ? {
-                background: `color-mix(in srgb, var(--mt-chart-1) ${Math.round(
-                  8 + Math.min(heat, 50) * 0.8,
-                )}%, transparent)`,
-              }
-            : undefined
-        }
-      >
+      <td className="text-right" style={heatStyle(heat)}>
         {p.cpu < 0.05 ? "0.0" : p.cpu.toFixed(1)}
       </td>
+      {showGpu && (
+        <td className="text-right" style={heatStyle(gpuHeat)}>
+          {p.gpu === null ? "–" : p.gpu < 0.05 ? "0.0" : p.gpu.toFixed(1)}
+        </td>
+      )}
       <td className="text-right">{formatBytes(p.memory)}</td>
       {!compact && (
         <>
