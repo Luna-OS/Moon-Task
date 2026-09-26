@@ -49,7 +49,7 @@ const COLUMNS: Column[] = [
     title: "Read + write per second",
     secondary: true,
   },
-  { key: "status", label: "Status", width: "6.5rem" },
+  { key: "status", label: "Status", width: "6.5rem", secondary: true },
 ];
 
 export interface ProcessTableProps {
@@ -337,9 +337,11 @@ function Row({
           </td>
         </>
       )}
-      <td>
-        <StateText state={p.status} />
-      </td>
+      {!compact && (
+        <td>
+          <StateText state={p.status} />
+        </td>
+      )}
     </tr>
   );
 }
