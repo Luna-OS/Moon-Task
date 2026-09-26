@@ -90,10 +90,6 @@ struct ProcessesView: View {
                     .foregroundStyle(Palette.textMuted)
             }
             .width(min: 50, ideal: 64, max: 80)
-            TableColumn("User", value: \VisibleRow.sortUser) { row in
-                Text(row.process.user ?? "–").foregroundStyle(Palette.textMuted).lineLimit(1)
-            }
-            .width(min: 60, ideal: 84, max: 160)
             TableColumn("CPU", value: \VisibleRow.sortCPU) { row in
                 HeatCell(text: row.process.cpu < 0.05 ? "0.0" : String(format: "%.1f", row.process.cpu), load: row.process.cpu)
             }
@@ -119,6 +115,10 @@ struct ProcessesView: View {
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
             .width(min: 60, ideal: 80, max: 110)
+            TableColumn("User", value: \VisibleRow.sortUser) { row in
+                Text(row.process.user ?? "–").foregroundStyle(Palette.textMuted).lineLimit(1)
+            }
+            .width(min: 60, ideal: 84, max: 160)
             TableColumn("State", value: \VisibleRow.sortState) { row in
                 Text(row.process.state.label)
                     .foregroundStyle(row.process.state.tone)

@@ -37,9 +37,16 @@ struct MoonPhase: View {
             guard f > 0 else { return }
             let rx = r * abs(1 - 2 * f)
             var lit = Path()
-            lit.addArc(center: center, radius: r, startAngle: .degrees(-90), endAngle: .degrees(90), clockwise: true)
-            // Back up along the terminator (an ellipse of width rx).
+            // Down the right edge of the disc, from the top (y grows downwards)…
             let steps = 32
+            for i in 0...steps {
+                let angle = -Double.pi / 2 + Double(i) / Double(steps) * Double.pi  // -90° … +90°
+                let point = CGPoint(
+                    x: center.x + r * CGFloat(cos(angle)), y: center.y + r * CGFloat(sin(angle))
+                )
+                if i == 0 { lit.move(to: point) } else { lit.addLine(to: point) }
+            }
+            // …and back up along the terminator (an ellipse of width rx).
             for i in 0...steps {
                 let t = Double(i) / Double(steps)
                 let angle = Double.pi / 2 - t * Double.pi  // +90° … -90°
