@@ -2,7 +2,7 @@
 
 > Every process, calmly under the moon.
 
-MoonTask is a modern, open-source task manager for Windows and Linux — in the spirit of
+MoonTask is a modern, open-source task manager for Windows, Linux and macOS — in the spirit of
 [TaskExplorer](https://github.com/DavidXanatos/TaskExplorer) and Process Explorer, but calmer,
 better organized and in the same night-sky design as [MoonDisk](https://github.com/Luna-OS/MoonDisk).
 
@@ -83,7 +83,8 @@ UI:
 
 ## Installation
 
-Installers for Windows (`.exe`) and Linux (`.deb`/`.rpm`) are published on the [Releases](https://github.com/Luna-OS/Moon-Task/releases)
+Installers for Windows (`.exe`), Linux (`.deb`/`.rpm`) and macOS (`.dmg`, Apple silicon and
+Intel, macOS 14 or newer) are published on the [Releases](https://github.com/Luna-OS/Moon-Task/releases)
 page.
 
 MoonTask runs as a normal user. It then sees every process, but can only act on your own and
@@ -91,25 +92,33 @@ can't look inside other users' processes (their modules, handles and environment
 everything, start it with administrator rights (Windows: *Run as administrator*; Linux:
 e.g. `sudo -E moontask`).
 
-A macOS version is planned. The macOS code paths (libproc, launchd) are already in the tree
-but aren't built, tested or released yet.
+### macOS
+
+On the Mac, MoonTask is a native app written in Swift and SwiftUI (`macos/`), with the same night
+sky, the same views and the same safety rules. Open the disk image and drag MoonTask into
+Applications. The app isn't notarized by Apple yet, so macOS asks once before the first start:
+open it, then allow it under **System Settings → Privacy & Security → Open Anyway**.
+
+macOS shows the command line, environment, open files and network connections only for your own
+processes; the system's and other users' processes show their CPU and memory, but not those
+details. launchd agents of your session appear under *Services*.
 
 ## Platform notes
 
-| Feature                       | Linux | Windows |
-|-------------------------------|:-----:|:-------:|
-| Process tree, CPU, memory, disk I/O | ✓ | ✓ |
-| End, kill, end tree           | ✓     | ✓ (end = kill) |
-| Suspend / resume              | ✓     | ✓       |
-| Priority                      | ✓ (nice, all threads) | ✓ (priority class) |
-| Threads / modules             | ✓     | ✓       |
-| Open handles                  | ✓     | planned |
-| GPU load, memory              | ✓ (NVIDIA, AMD; Intel: name, temperature) | ✓ (all vendors) |
-| GPU load per process          | ✓ (NVIDIA) | ✓       |
-| GPU temperature               | ✓     | ✓ (where the driver reports it, as in Task Manager) |
-| Network connections           | ✓     | ✓       |
-| Services                      | systemd | Service Control Manager |
-| CPU and other sensor temperatures | ✓ | –       |
+| Feature                       | Linux | Windows | macOS |
+|-------------------------------|:-----:|:-------:|:-----:|
+| Process tree, CPU, memory, disk I/O | ✓ | ✓ | ✓ (disk I/O: your processes) |
+| End, kill, end tree           | ✓     | ✓ (end = kill) | ✓ |
+| Suspend / resume              | ✓     | ✓       | ✓ |
+| Priority                      | ✓ (nice, all threads) | ✓ (priority class) | ✓ (nice) |
+| Threads / modules             | ✓     | ✓       | thread count |
+| Open handles                  | ✓     | planned | ✓ (open files, your processes) |
+| GPU load, memory              | ✓ (NVIDIA, AMD; Intel: name, temperature) | ✓ (all vendors) | ✓ |
+| GPU load per process          | ✓ (NVIDIA) | ✓       | – |
+| GPU temperature               | ✓     | ✓ (where the driver reports it, as in Task Manager) | – |
+| Network connections           | ✓     | ✓       | ✓ (your processes) |
+| Services                      | systemd | Service Control Manager | launchd agents |
+| CPU and other sensor temperatures | ✓ | –       | thermal state |
 
 ## Development
 
@@ -129,6 +138,25 @@ src/
   components/ process table, detail panel, charts, dialogs
   views/      Overview, Processes, Performance, Network, Services, Settings
 ```
+
+The macOS app is a Swift package in `macos/`:
+
+```
+macos/Sources/
+  MoonTaskCore/    models, process tree/list/apps, sorting, safety rules (pure Swift, tested)
+  CDarwin/         a thin C layer over libproc, sysctl, Mach and IOKit
+  MoonTaskSystem/  reads the Mac and acts on processes
+  MoonTask/        the SwiftUI app
+```
+
+```sh
+cd macos
+swift test                      # tests
+swift run                       # run the app
+scripts/bundle.sh 0.3.0         # MoonTask.app and a .dmg in dist/
+```
+
+The Windows/Linux app:
 
 ```sh
 npm install
