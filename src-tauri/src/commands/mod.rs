@@ -12,14 +12,20 @@ use crate::monitor::Monitor;
 use crate::{network, platform, services};
 use std::sync::{Arc, Mutex, MutexGuard};
 
+/// The monitor is created on first use, on a worker thread — never on the
+/// main thread, which belongs to the window and WebView2: anything that
+/// initializes COM there first (as sysinfo's WMI code did) makes the
+/// webview fail to start.
+type SharedMonitor = Arc<Mutex<Option<Monitor>>>;
+
 pub struct AppState {
-    monitor: Arc<Mutex<Monitor>>,
+    monitor: SharedMonitor,
 }
 
 impl AppState {
     pub fn new() -> Self {
         AppState {
-            monitor: Arc::new(Mutex::new(Monitor::new())),
+            monitor: Arc::new(Mutex::new(None)),
         }
     }
 }
@@ -30,10 +36,15 @@ impl Default for AppState {
     }
 }
 
-fn lock(monitor: &Mutex<Monitor>) -> Result<MutexGuard<'_, Monitor>, String> {
-    monitor
+/// Runs `work` with the monitor, creating it on first use.
+fn with_monitor<T>(
+    monitor: &Mutex<Option<Monitor>>,
+    work: impl FnOnce(&mut Monitor) -> Result<T, String>,
+) -> Result<T, String> {
+    let mut guard: MutexGuard<'_, Option<Monitor>> = monitor
         .lock()
-        .map_err(|_| "internal state is corrupted".to_string())
+        .map_err(|_| "internal state is corrupted".to_string())?;
+    work(guard.get_or_insert_with(Monitor::new))
 }
 
 /// Runs `work` on a blocking worker thread.
@@ -50,13 +61,13 @@ where
 #[tauri::command]
 pub async fn system_info(state: tauri::State<'_, AppState>) -> Result<SystemInfo, String> {
     let monitor = state.monitor.clone();
-    blocking(move || Ok(lock(&monitor)?.system_info())).await
+    blocking(move || with_monitor(&monitor, |m| Ok(m.system_info()))).await
 }
 
 #[tauri::command]
 pub async fn snapshot(state: tauri::State<'_, AppState>) -> Result<Snapshot, String> {
     let monitor = state.monitor.clone();
-    blocking(move || Ok(lock(&monitor)?.snapshot())).await
+    blocking(move || with_monitor(&monitor, |m| Ok(m.snapshot()))).await
 }
 
 #[tauri::command]
@@ -65,7 +76,7 @@ pub async fn process_details(
     pid: u32,
 ) -> Result<ProcessDetails, String> {
     let monitor = state.monitor.clone();
-    blocking(move || lock(&monitor)?.details(pid)).await
+    blocking(move || with_monitor(&monitor, |m| m.details(pid))).await
 }
 
 /// Runs a process action. `confirmed` must be `true` for anything
@@ -79,7 +90,9 @@ pub async fn process_action(
 ) -> Result<ActionOutcome, String> {
     let monitor = state.monitor.clone();
     blocking(move || {
-        control::execute(&mut *lock(&monitor)?, &request, confirmed).map_err(|e| e.to_string())
+        with_monitor(&monitor, |m| {
+            control::execute(m, &request, confirmed).map_err(|e| e.to_string())
+        })
     })
     .await
 }
@@ -90,9 +103,10 @@ pub async fn process_action(
 pub async fn process_reveal(state: tauri::State<'_, AppState>, pid: u32) -> Result<(), String> {
     let monitor = state.monitor.clone();
     blocking(move || {
-        let exe = lock(&monitor)?
-            .exe_of(pid)
-            .ok_or_else(|| "the executable's location is unknown".to_string())?;
+        let exe = with_monitor(&monitor, |m| {
+            m.exe_of(pid)
+                .ok_or_else(|| "the executable's location is unknown".to_string())
+        })?;
         platform::reveal_in_file_manager(&exe)
     })
     .await

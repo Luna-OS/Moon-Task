@@ -98,7 +98,7 @@ but aren't built, tested or released yet.
 | Open handles                  | ✓     | planned |
 | Network connections           | ✓     | ✓       |
 | Services                      | systemd | Service Control Manager |
-| Temperatures                  | ✓     | where exposed |
+| Temperatures                  | ✓     | –       |
 
 ## Development
 

@@ -108,3 +108,33 @@ jobs:
       # cargo build -> bundling) still works on every platform, without
       # spending release-workflow-level time on an optimized build.
       - run: npx tauri build --debug --bundles ${{ matrix.bundles }}
+
+      # Start the app for real and make sure it's still running after 20 s.
+      # Tests never open a window; this catches crashes in the window and
+      # webview start-up (like a COM mode clash with WebView2 on Windows).
+      - name: Smoke test (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y xvfb
+          xvfb-run -a src-tauri/target/debug/moontask > app.log 2>&1 &
+          sleep 20
+          if ! pgrep -x moontask > /dev/null; then
+            echo "MoonTask exited during start-up:"; cat app.log
+            cat /tmp/moontask-crash.log 2>/dev/null || true
+            exit 1
+          fi
+          pkill -x moontask
+
+      - name: Smoke test (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $app = Start-Process -FilePath src-tauri\target\debug\moontask.exe -PassThru
+          Start-Sleep -Seconds 20
+          if ($app.HasExited) {
+            Write-Host "MoonTask exited during start-up with code $($app.ExitCode)"
+            $log = Join-Path $env:TEMP 'moontask-crash.log'
+            if (Test-Path $log) { Get-Content $log }
+            exit 1
+          }
+          Stop-Process -Id $app.Id
