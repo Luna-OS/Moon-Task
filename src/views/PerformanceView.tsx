@@ -1,6 +1,12 @@
 import { useState, type ReactNode } from "react";
 import type { History } from "@/lib/history";
-import { formatBytes, formatFrequency, formatPercent, formatRate } from "@/lib/format";
+import {
+  formatBytes,
+  formatFrequency,
+  formatPercent,
+  formatRate,
+  formatTemperature,
+} from "@/lib/format";
 import type { Gpu, Snapshot, SystemInfo } from "@/types/models";
 import { AreaChart, Meter, Sparkline } from "@/components/charts";
 import {
@@ -371,7 +377,7 @@ function GpuSection({ gpu, index, history }: { gpu: Gpu; index: number; history:
         : formatBytes(gpu.sharedUsed ?? 0),
     ]);
   }
-  if (gpu.temperature !== null) facts.push(["Temperature", `${gpu.temperature.toFixed(0)} °C`]);
+  if (gpu.temperature !== null) facts.push(["Temperature", formatTemperature(gpu.temperature)]);
   if (gpu.vendor) facts.push(["Vendor", gpu.vendor]);
 
   return (

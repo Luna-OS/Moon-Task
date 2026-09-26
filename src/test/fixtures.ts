@@ -127,7 +127,7 @@ export function snapshot(overrides: Partial<Snapshot> = {}): Snapshot {
         memoryTotal: 12 * GIB,
         sharedUsed: GIB / 4,
         sharedTotal: 8 * GIB,
-        temperature: null,
+        temperature: 58,
       },
     ],
     processes: PROCESSES,

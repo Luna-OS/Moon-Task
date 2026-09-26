@@ -76,3 +76,8 @@ export function formatFrequency(mhz: number): string {
 export function formatCount(n: number): string {
   return n.toLocaleString("en-US");
 }
+
+/** A temperature in whole degrees Celsius, like Task Manager shows it. */
+export function formatTemperature(celsius: number): string {
+  return `${celsius.toFixed(0)} °C`;
+}
