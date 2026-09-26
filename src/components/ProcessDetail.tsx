@@ -447,11 +447,9 @@ function MiniStat({
   children: ReactNode;
 }) {
   return (
-    <div className="mt-inset flex flex-col gap-1 overflow-hidden px-3 pt-2">
-      <div className="flex items-baseline justify-between">
-        <span className="text-xs text-(--mt-text-muted)">{label}</span>
-        <span className="text-sm font-semibold tabular-nums">{value}</span>
-      </div>
+    <div className="mt-inset flex min-w-0 flex-col overflow-hidden px-3 pt-2">
+      <span className="text-xs text-(--mt-text-muted)">{label}</span>
+      <span className="truncate text-sm font-semibold whitespace-nowrap tabular-nums">{value}</span>
       <div className="-mx-3">{children}</div>
     </div>
   );

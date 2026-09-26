@@ -8,7 +8,11 @@ better organized and in the same night-sky design as [MoonDisk](https://github.c
 
 ![MoonTask overview](docs/screenshots/overview.png)
 
-![The process tree with the detail panel](docs/screenshots/processes.png)
+![The process tree with its GPU column and the detail panel](docs/screenshots/processes.png)
+
+![GPU load, engines and video memory in the performance view](docs/screenshots/performance-gpu.png)
+
+<sub>Screenshots show the real interface with sample data of a Windows gaming PC.</sub>
 
 ## Features
 
