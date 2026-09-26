@@ -130,8 +130,14 @@
     Push $2
     Push $3
     Push $4
-    FindWindow $0 "#32770" "" $HWNDPARENT
-    ${If} $0 <> 0
+    ; Every dialog in the window: which one holds the new page differs
+    ; between inner and full-window pages, and theming a stale one is harmless.
+    StrCpy $0 0
+    ${Do}
+      FindWindow $0 "#32770" "" $HWNDPARENT $0
+      ${If} $0 = 0
+        ${Break}
+      ${EndIf}
       SetCtlColors $0 "" "${BG}"
       StrCpy $1 0
       ${Do}
@@ -177,7 +183,7 @@
           System::Call "uxtheme::SetWindowTheme(p r1, w 'DarkMode_Explorer', p 0)"
         ${EndIf}
       ${Loop}
-    ${EndIf}
+    ${Loop}
     Pop $4
     Pop $3
     Pop $2
