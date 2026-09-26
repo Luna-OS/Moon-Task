@@ -1,6 +1,6 @@
 [package]
 name = "moontask"
-version = "0.2.0"
+version = "0.2.1"
 description = "MoonTask – every process, calmly under the moon. A local, open-source task manager."
 authors = ["MoonTask contributors"]
 license = "MIT"

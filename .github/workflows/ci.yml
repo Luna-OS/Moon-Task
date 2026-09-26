@@ -138,3 +138,20 @@ jobs:
             exit 1
           }
           Stop-Process -Id $app.Id
+
+      # Screenshots of every installer page, to review the installer's theme
+      # on real Windows. Informational only, so it never fails the build.
+      - name: Installer screenshots (Windows)
+        if: runner.os == 'Windows'
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem src-tauri\target\debug\bundle\nsis\*-setup.exe | Select-Object -First 1
+          .github\scripts\installer-screenshots.ps1 -Setup $setup.FullName -Out installer-screenshots
+      - name: Upload installer screenshots
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-screenshots
+          path: installer-screenshots
+          if-no-files-found: ignore
