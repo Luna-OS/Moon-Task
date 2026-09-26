@@ -39,8 +39,9 @@ final class SamplerTests: XCTestCase {
         """)
         XCTAssertEqual(usage[1]?.resident, 12345 * 1024)
         XCTAssertEqual(usage[1]?.cpuNs, 42_500_000_000)
-        let expected: Double = (86_400 + 2 * 3600 + 3 * 60 + 4) * 1e9
-        XCTAssertEqual(usage[412]?.cpuNs, UInt64(expected))
+        // 1 day, 2 h, 3 min, 4 s
+        let expected: UInt64 = 93_784_000_000_000
+        XCTAssertEqual(usage[412]?.cpuNs, expected)
         XCTAssertEqual(Sampler.parseCPUTime("123:45.67")!, 7425.67, accuracy: 0.001)
     }
 
