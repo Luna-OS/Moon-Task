@@ -1,0 +1,58 @@
+[package]
+name = "moontask"
+version = "0.1.0"
+description = "MoonTask – every process, calmly under the moon. A local, open-source task manager."
+authors = ["MoonTask contributors"]
+license = "MIT"
+repository = "https://github.com/Luna-OS/Moon-Task"
+edition = "2021"
+# sysinfo 0.39 needs Rust 1.95; raised only with a deliberate decision, not
+# incidentally by a new dependency.
+rust-version = "1.95"
+
+[lib]
+# Distinct from the `moontask` binary target below so the core can be
+# built and tested without the Tauri UI (`--no-default-features`), per the
+# standard Tauri 2 project layout.
+name = "moontask_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "moontask"
+path = "src/main.rs"
+required-features = ["gui"]
+
+[features]
+default = ["gui"]
+# The Tauri app. Without it, only the monitoring/control core is built,
+# which is what `cargo test --no-default-features` exercises on machines
+# without the webview libraries.
+gui = ["dep:tauri", "dep:tauri-build"]
+
+[build-dependencies]
+tauri-build = { version = "2.6.3", features = [], optional = true }
+
+[dependencies]
+tauri = { version = "2.11.6", features = [], optional = true }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+thiserror = "2.0.21"
+sysinfo = "0.39.6"
+netstat2 = "0.11.2"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2.189"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61.2", features = [
+  "Win32_Foundation",
+  "Win32_System_Threading",
+  "Win32_System_Diagnostics_ToolHelp",
+] }
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
