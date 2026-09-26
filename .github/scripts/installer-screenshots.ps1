@@ -84,3 +84,19 @@ Stop-Setup
 Start-Process (Join-Path $env:LOCALAPPDATA 'MoonTask\uninstall.exe')
 Save-Page '6-uninstall'
 Stop-Setup
+
+# TEMP: the screenshots as JPEG/base64 in the log, for reviewers who can't
+# download artifacts.
+Add-Type -AssemblyName System.Drawing
+$codec = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq 'image/jpeg' }
+$params = New-Object System.Drawing.Imaging.EncoderParameters 1
+$params.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter ([System.Drawing.Imaging.Encoder]::Quality), 85L
+foreach ($f in Get-ChildItem $Out -Filter *.png) {
+  $img = [System.Drawing.Image]::FromFile($f.FullName)
+  $ms = New-Object System.IO.MemoryStream
+  $img.Save($ms, $codec, $params); $img.Dispose()
+  $b64 = [Convert]::ToBase64String($ms.ToArray())
+  for ($i = 0; $i -lt $b64.Length; $i += 4000) {
+    Write-Host ("B64:" + $f.BaseName + ":" + $b64.Substring($i, [Math]::Min(4000, $b64.Length - $i)))
+  }
+}
