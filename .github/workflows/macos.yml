@@ -55,8 +55,15 @@ jobs:
             screencapture -x "screenshots/$i-section.png" || true
             i=$((i+1))
           done
-          ls -la screenshots
           pkill -x MoonTask || true
+          # The disk image's window, as Finder shows it.
+          hdiutil attach dist/*.dmg -mountpoint /Volumes/MoonTask > /dev/null
+          open /Volumes/MoonTask
+          sleep 4
+          screencapture -x "screenshots/7-disk-image.png" || true
+          osascript -e 'tell application "Finder" to close every window' || true
+          hdiutil detach /Volumes/MoonTask > /dev/null || true
+          ls -la screenshots
       - uses: actions/upload-artifact@v4
         with:
           name: macos-app

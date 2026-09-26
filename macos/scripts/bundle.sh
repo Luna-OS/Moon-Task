@@ -24,12 +24,16 @@ printf 'APPL????' > "$APP/Contents/PkgInfo"
 codesign --force --deep --sign - "$APP"
 codesign --verify --verbose=2 "$APP"
 
-# A disk image with the app and a shortcut to /Applications.
-STAGE=$(mktemp -d)
-cp -R "$APP" "$STAGE/"
-ln -s /Applications "$STAGE/Applications"
+# The disk image: the night-sky window with the app and a shortcut to
+# Applications (laid out by dmgbuild, which needs no Finder scripting).
 DMG="$OUT/MoonTask_${VERSION}_macos_universal.dmg"
 rm -f "$DMG"
-hdiutil create -volname "MoonTask" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
-rm -rf "$STAGE"
+BG="$OUT/background.tiff"
+tiffutil -cathidpicheck Resources/dmg/background.png Resources/dmg/background@2x.png -out "$BG"
+if [ ! -x "$OUT/.venv/bin/dmgbuild" ]; then
+  python3 -m venv "$OUT/.venv"
+  "$OUT/.venv/bin/pip" install --quiet dmgbuild
+fi
+"$OUT/.venv/bin/dmgbuild" -s scripts/dmg-settings.py \
+  -D app="$APP" -D background="$BG" "MoonTask" "$DMG"
 echo "Built $APP and $DMG"
