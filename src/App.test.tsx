@@ -141,7 +141,9 @@ describe("App", () => {
     render(<App />);
     await screen.findByText("moonbase");
     expect(screen.getByRole("region", { name: "GPU: 37.0 %" })).toBeInTheDocument();
-    expect(screen.getByText(/NVIDIA GeForce RTX 4070/)).toBeInTheDocument();
+    expect(screen.getByText(/NVIDIA GeForce RTX 4070 · 58 °C/)).toBeInTheDocument();
+    // Like Task Manager's sidebar: load and temperature.
+    expect(screen.getByText("37 % · 58 °C")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Processes/ }));
     const table = await screen.findByRole("treegrid", { name: "Process list" });

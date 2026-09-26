@@ -7,6 +7,7 @@ import {
   formatFrequency,
   formatPercent,
   formatRate,
+  formatTemperature,
 } from "@/lib/format";
 import type { ProcessRow, Snapshot, SystemInfo } from "@/types/models";
 import { primaryGpu } from "@/lib/gpu";
@@ -82,6 +83,7 @@ export function OverviewView({
             value={gpu.card.utilization === null ? "–" : formatPercent(gpu.card.utilization)}
             sub={[
               gpu.card.name,
+              gpu.card.temperature !== null ? formatTemperature(gpu.card.temperature) : null,
               gpu.card.memoryUsed !== null && gpu.card.memoryTotal !== null
                 ? `${formatBytes(gpu.card.memoryUsed)} / ${formatBytes(gpu.card.memoryTotal)}`
                 : null,

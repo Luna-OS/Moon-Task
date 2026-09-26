@@ -73,6 +73,14 @@ pub(crate) fn vendor_name(vendor_id: u32) -> Option<&'static str> {
     }
 }
 
+/// A temperature in tenths of a degree Celsius, as the Windows graphics
+/// kernel reports it. 0 means "not reported"; implausible values are
+/// dropped rather than shown.
+#[cfg_attr(not(windows), allow(dead_code))]
+pub(crate) fn deci_celsius(raw: u32) -> Option<f32> {
+    (1..=1500).contains(&raw).then(|| raw as f32 / 10.0)
+}
+
 /// An adapter's LUID in the form the Windows performance counters use in
 /// their instance names: `luid_0x00000000_0x0000C4F2`.
 #[cfg_attr(not(windows), allow(dead_code))]
@@ -251,6 +259,13 @@ pub(crate) fn pci_ids_lookup(db: &str, vendor: u16, device: u16) -> Option<Strin
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn deci_celsius_converts_and_drops_unreported_values() {
+        assert_eq!(deci_celsius(523), Some(52.3));
+        assert_eq!(deci_celsius(0), None);
+        assert_eq!(deci_celsius(u32::MAX), None);
+    }
 
     fn inst(pid: u32, engine: u32, engine_type: &str) -> EngineInstance {
         EngineInstance {
