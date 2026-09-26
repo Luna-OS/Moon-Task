@@ -71,14 +71,3 @@ jobs:
             macos/dist/*.dmg
             macos/screenshots
           if-no-files-found: warn
-      # TEMP: the screenshots in the job log, for reviewers who can't
-      # download artifacts.
-      - name: Screenshots in the log
-        if: github.event_name == 'pull_request'
-        continue-on-error: true
-        run: |
-          for f in screenshots/*.png; do
-            b=$(basename "$f" .png)
-            sips -s format jpeg -s formatOptions 70 -Z 1400 "$f" --out "screenshots/$b.jpg" > /dev/null
-            base64 -i "screenshots/$b.jpg" | tr -d '\n' | fold -w 4000 | sed "s/^/B64:$b:/"
-          done
