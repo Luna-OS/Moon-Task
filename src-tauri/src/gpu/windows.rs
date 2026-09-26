@@ -1,13 +1,22 @@
 //! Windows: GPU load and memory from the performance counters Task Manager
-//! uses, adapter names and sizes from DXGI.
+//! uses, adapter names and sizes from DXGI, and the temperature from the
+//! graphics kernel (D3DKMT), like Task Manager's "GPU Temperature".
 
 use super::GpuReading;
-use super::{aggregate, luid_key, parse_adapter_instance, parse_engine_instance, vendor_name};
+use super::{
+    aggregate, deci_celsius, luid_key, parse_adapter_instance, parse_engine_instance, vendor_name,
+};
 use crate::models::Gpu;
 use std::collections::HashMap;
 use windows::Win32::Graphics::Dxgi::{
     CreateDXGIFactory1, IDXGIFactory1, DXGI_ADAPTER_FLAG_SOFTWARE,
 };
+use windows_sys::Wdk::Graphics::Direct3D::{
+    D3DKMTCloseAdapter, D3DKMTOpenAdapterFromLuid, D3DKMTQueryAdapterInfo, D3DKMT_ADAPTER_PERFDATA,
+    D3DKMT_CLOSEADAPTER, D3DKMT_OPENADAPTERFROMLUID, D3DKMT_QUERYADAPTERINFO,
+    KMTQAITYPE_ADAPTERPERFDATA,
+};
+use windows_sys::Win32::Foundation::LUID;
 use windows_sys::Win32::System::Performance::{
     PdhAddEnglishCounterW, PdhCloseQuery, PdhCollectQueryData, PdhGetFormattedCounterArrayW,
     PdhOpenQueryW, PDH_FMT_COUNTERVALUE_ITEM_W, PDH_FMT_DOUBLE, PDH_HCOUNTER, PDH_HQUERY,
@@ -22,6 +31,49 @@ struct Adapter {
     vendor: Option<&'static str>,
     dedicated: u64,
     shared: u64,
+    kernel: Option<KernelAdapter>,
+}
+
+/// The adapter as the graphics kernel knows it, for its performance data.
+struct KernelAdapter(u32);
+
+impl KernelAdapter {
+    fn open(luid: LUID) -> Option<Self> {
+        let mut open = D3DKMT_OPENADAPTERFROMLUID {
+            AdapterLuid: luid,
+            hAdapter: 0,
+        };
+        // SAFETY: `open` is a valid in/out struct for the call.
+        let status = unsafe { D3DKMTOpenAdapterFromLuid(&mut open) };
+        (status == 0).then_some(KernelAdapter(open.hAdapter))
+    }
+
+    /// Degrees Celsius; `None` where the driver doesn't report it (WDDM
+    /// before 2.4, and most integrated GPUs).
+    fn temperature(&self) -> Option<f32> {
+        let mut perf = D3DKMT_ADAPTER_PERFDATA::default();
+        let mut query = D3DKMT_QUERYADAPTERINFO {
+            hAdapter: self.0,
+            Type: KMTQAITYPE_ADAPTERPERFDATA,
+            pPrivateDriverData: (&mut perf as *mut D3DKMT_ADAPTER_PERFDATA).cast(),
+            PrivateDriverDataSize: std::mem::size_of::<D3DKMT_ADAPTER_PERFDATA>() as u32,
+        };
+        // SAFETY: the adapter is open and `query` points at `perf`, which
+        // is exactly as large as the size it states.
+        let status = unsafe { D3DKMTQueryAdapterInfo(&mut query) };
+        if status != 0 {
+            return None;
+        }
+        deci_celsius(perf.Temperature)
+    }
+}
+
+impl Drop for KernelAdapter {
+    fn drop(&mut self) {
+        let close = D3DKMT_CLOSEADAPTER { hAdapter: self.0 };
+        // SAFETY: the handle came from D3DKMTOpenAdapterFromLuid.
+        unsafe { D3DKMTCloseAdapter(&close) };
+    }
 }
 
 /// An open PDH query with its three wildcard counters.
@@ -174,6 +226,10 @@ fn adapters() -> Vec<Adapter> {
             vendor: vendor_name(desc.VendorId),
             dedicated: desc.DedicatedVideoMemory as u64,
             shared: desc.SharedSystemMemory as u64,
+            kernel: KernelAdapter::open(LUID {
+                LowPart: desc.AdapterLuid.LowPart,
+                HighPart: desc.AdapterLuid.HighPart,
+            }),
         });
     }
     out
@@ -259,7 +315,7 @@ fn to_gpu(
         memory_used: dedicated_used,
         shared_total: (a.shared > 0).then_some(a.shared),
         shared_used,
-        temperature: None,
+        temperature: a.kernel.as_ref().and_then(KernelAdapter::temperature),
     }
 }
 

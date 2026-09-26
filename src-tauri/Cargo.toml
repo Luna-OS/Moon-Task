@@ -1,6 +1,6 @@
 [package]
 name = "moontask"
-version = "0.2.1"
+version = "0.2.2"
 description = "MoonTask – every process, calmly under the moon. A local, open-source task manager."
 authors = ["MoonTask contributors"]
 license = "MIT"
@@ -64,6 +64,7 @@ windows-sys = { version = "0.61.2", features = [
   "Win32_System_Threading",
   "Win32_System_Diagnostics_ToolHelp",
   "Win32_System_Performance",
+  "Wdk_Graphics_Direct3D",
 ] }
 # Only for DXGI adapter names; the same version sysinfo already pulls in.
 windows = { version = "0.61.3", features = ["Win32_Graphics_Dxgi"] }

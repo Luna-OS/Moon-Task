@@ -4,7 +4,7 @@ import { useMonitor } from "@/hooks/useMonitor";
 import { countDescendants, processId, type SortState, type ViewMode } from "@/lib/processes";
 import { ACTION_LABELS, isAllowed, needsConfirmation } from "@/lib/risk";
 import { loadSettings, resolveTheme, saveSettings, type Settings } from "@/lib/settings";
-import { formatBytes, formatDuration, formatPercent } from "@/lib/format";
+import { formatBytes, formatDuration, formatPercent, formatTemperature } from "@/lib/format";
 import { PRIORITY_LABELS } from "@/lib/labels";
 import { primaryGpu } from "@/lib/gpu";
 import type {
@@ -422,7 +422,11 @@ export default function App() {
             {gpu && gpu.card.utilization !== null && (
               <SideGauge
                 label="GPU"
-                value={formatPercent(gpu.card.utilization, 0)}
+                value={
+                  gpu.card.temperature === null
+                    ? formatPercent(gpu.card.utilization, 0)
+                    : `${formatPercent(gpu.card.utilization, 0)} · ${formatTemperature(gpu.card.temperature)}`
+                }
                 fraction={gpu.card.utilization / 100}
               />
             )}

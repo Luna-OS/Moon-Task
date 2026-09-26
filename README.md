@@ -31,8 +31,9 @@ better organized and in the same night-sky design as [MoonDisk](https://github.c
 - **Actions**: end, force kill, end the whole process tree, suspend, resume, change priority,
   show the executable in the file manager
 - **GPU** — load per graphics card and engine (3D, video decode/encode, copy …), dedicated and
-  shared video memory, temperature where reported, and a **GPU column per process** (Windows:
-  the same performance counters Task Manager uses; Linux: NVML for NVIDIA, sysfs for AMD/Intel)
+  shared video memory, the GPU temperature (like Task Manager, where the driver reports it), and a
+  **GPU column per process** (Windows: the same performance counters and graphics kernel data
+  Task Manager uses; Linux: NVML for NVIDIA, sysfs for AMD/Intel)
 - **Performance** — CPU (total and per core), memory and swap, GPU, disk and network throughput
   over time with hover read-outs, volumes, and temperature sensors
 - **Network** — every open TCP/UDP connection and listening port, with the process holding it
@@ -105,9 +106,10 @@ but aren't built, tested or released yet.
 | Open handles                  | ✓     | planned |
 | GPU load, memory              | ✓ (NVIDIA, AMD; Intel: name, temperature) | ✓ (all vendors) |
 | GPU load per process          | ✓ (NVIDIA) | ✓       |
+| GPU temperature               | ✓     | ✓ (where the driver reports it, as in Task Manager) |
 | Network connections           | ✓     | ✓       |
 | Services                      | systemd | Service Control Manager |
-| Temperatures                  | ✓     | –       |
+| CPU and other sensor temperatures | ✓ | –       |
 
 ## Development
 
