@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Tauri core default permissions only, no plugin permissions. The app's own commands (snapshot, process_action, services_list, … see src-tauri/src/commands/) are not plugin commands and need no permission entry of their own.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

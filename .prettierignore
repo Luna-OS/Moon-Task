@@ -1,0 +1,8 @@
+dist
+node_modules
+src-tauri/target
+src-tauri/gen
+package-lock.json
+
+# Markdown is reviewed by hand; Prettier's table padding makes noisy diffs.
+*.md
