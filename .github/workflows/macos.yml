@@ -1,0 +1,77 @@
+name: macOS
+
+# The native macOS app (macos/, Swift + SwiftUI). Separate from the Tauri
+# CI so a change to one doesn't wait for the other.
+on:
+  push:
+    branches: [main]
+    paths: ["macos/**", ".github/workflows/macos.yml"]
+  pull_request:
+    paths: ["macos/**", ".github/workflows/macos.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: macos-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: macos
+    steps:
+      - uses: actions/checkout@v5
+      - run: swift --version
+      - name: Build
+        run: swift build
+      - name: Test
+        run: swift test
+      - name: Bundle
+        run: scripts/bundle.sh 0.0.0-ci
+
+      # Start the real app and make sure it's still running after 20 s.
+      - name: Smoke test
+        run: |
+          open -n dist/MoonTask.app
+          sleep 20
+          if ! pgrep -x MoonTask > /dev/null; then
+            echo "MoonTask exited during start-up"
+            log show --last 2m --predicate 'process == "MoonTask"' --style compact | tail -50 || true
+            exit 1
+          fi
+
+      # Screenshots of each section, for reviewing the design.
+      - name: Screenshots
+        continue-on-error: true
+        run: |
+          mkdir -p screenshots
+          osascript -e 'tell application "MoonTask" to activate' || true
+          sleep 2
+          i=1
+          for key in 1 2 3 4 5 6; do
+            osascript -e "tell application \"System Events\" to keystroke \"$key\" using command down" || true
+            sleep 3
+            screencapture -x "screenshots/$i-section.png" || true
+            i=$((i+1))
+          done
+          ls -la screenshots
+          pkill -x MoonTask || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-app
+          path: |
+            macos/dist/*.dmg
+            macos/screenshots
+          if-no-files-found: warn
+      # TEMP: the screenshots in the job log, for reviewers who can't
+      # download artifacts.
+      - name: Screenshots in the log
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: |
+          for f in screenshots/*.png; do
+            b=$(basename "$f" .png)
+            sips -s format jpeg -s formatOptions 70 -Z 1400 "$f" --out "screenshots/$b.jpg" > /dev/null
+            base64 -i "screenshots/$b.jpg" | tr -d '\n' | fold -w 4000 | sed "s/^/B64:$b:/"
+          done
