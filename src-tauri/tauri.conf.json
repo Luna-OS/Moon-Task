@@ -48,6 +48,8 @@
     },
     "windows": {
       "nsis": {
+        "template": "installer/installer.nsi",
+        "installerHooks": "installer/theme.nsh",
         "installerIcon": "icons/icon.ico",
         "headerImage": "installer/header.bmp",
         "sidebarImage": "installer/sidebar.bmp",
