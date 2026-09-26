@@ -40,6 +40,7 @@ pub struct Snapshot {
     pub network: NetworkStats,
     pub disk: DiskStats,
     pub sensors: Vec<Sensor>,
+    pub gpus: Vec<Gpu>,
     pub processes: Vec<ProcessRow>,
     pub process_count: usize,
     pub thread_count: u64,
@@ -128,4 +129,32 @@ pub struct Sensor {
     /// °C.
     pub temperature: f32,
     pub critical: Option<f32>,
+}
+
+/// A graphics card. Every figure is optional: what a card reports depends
+/// on vendor, driver and platform.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Gpu {
+    pub name: String,
+    pub vendor: Option<&'static str>,
+    /// Overall load, 0–100: the busiest engine's, like Task Manager.
+    pub utilization: Option<f32>,
+    /// Load per engine type (3D, Video Decode, Copy, …), busiest first.
+    pub engines: Vec<GpuEngine>,
+    /// Dedicated video memory in bytes.
+    pub memory_used: Option<u64>,
+    pub memory_total: Option<u64>,
+    /// System memory the GPU uses (Windows "shared", AMD "GTT").
+    pub shared_used: Option<u64>,
+    pub shared_total: Option<u64>,
+    /// °C.
+    pub temperature: Option<f32>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GpuEngine {
+    pub name: String,
+    pub utilization: f32,
 }

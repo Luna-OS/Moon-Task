@@ -18,6 +18,7 @@ import {
 import { niceMax } from "@/lib/scale";
 import { filterConnections, isLocal } from "@/lib/connections";
 import { filterServices } from "@/lib/services";
+import { primaryGpu } from "@/lib/gpu";
 import { PROCESSES, proc, snapshot } from "@/test/fixtures";
 import type { Connection, Service } from "@/types/models";
 
@@ -113,6 +114,14 @@ describe("history", () => {
     expect(h.cpu).toHaveLength(3);
     expect(h.cores).toHaveLength(2);
     expect(h.processes.get(processKey(PROCESSES[4]))?.cpu).toEqual([12, 12, 12, 12, 12]);
+  });
+
+  it("keeps a load and memory series per GPU", () => {
+    let h = emptyHistory();
+    h = appendSnapshot(h, snapshot());
+    h = appendSnapshot(h, snapshot());
+    expect(h.gpu).toEqual([[37, 37]]);
+    expect(h.gpuMemory[0]).toHaveLength(2);
   });
 
   it("drops the history of exited processes", () => {
@@ -232,5 +241,20 @@ describe("services", () => {
     expect(filterServices(services, "failed", "")).toHaveLength(1);
     expect(filterServices(services, "all", "secure shell")[0].name).toBe("ssh.service");
     expect(filterServices(services, "all", "100")[0].name).toBe("ssh.service");
+  });
+});
+
+describe("gpu", () => {
+  it("features the busiest GPU", () => {
+    const base = snapshot().gpus[0];
+    const s = snapshot({
+      gpus: [
+        { ...base, name: "iGPU", utilization: 5 },
+        { ...base, name: "dGPU", utilization: 80 },
+        { ...base, name: "silent", utilization: null },
+      ],
+    });
+    expect(primaryGpu(s)).toEqual({ card: s.gpus[1], index: 1 });
+    expect(primaryGpu(snapshot({ gpus: [] }))).toBeNull();
   });
 });

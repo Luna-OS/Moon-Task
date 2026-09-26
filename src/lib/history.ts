@@ -13,6 +13,7 @@ export const PROCESS_HISTORY_LENGTH = 60;
 export interface ProcessHistory {
   cpu: number[];
   memory: number[];
+  gpu: number[];
 }
 
 export interface History {
@@ -25,6 +26,9 @@ export interface History {
   netTx: number[];
   diskRead: number[];
   diskWrite: number[];
+  /** Per GPU (same order as `Snapshot.gpus`): load and dedicated memory. */
+  gpu: number[][];
+  gpuMemory: number[][];
   /** Keyed by `processKey`, pruned when a process exits. */
   processes: Map<string, ProcessHistory>;
 }
@@ -40,6 +44,8 @@ export function emptyHistory(): History {
     netTx: [],
     diskRead: [],
     diskWrite: [],
+    gpu: [],
+    gpuMemory: [],
     processes: new Map(),
   };
 }
@@ -63,6 +69,7 @@ export function appendSnapshot(h: History, s: Snapshot, max = HISTORY_LENGTH): H
     processes.set(key, {
       cpu: push(prev?.cpu ?? [], p.cpu, PROCESS_HISTORY_LENGTH),
       memory: push(prev?.memory ?? [], p.memory, PROCESS_HISTORY_LENGTH),
+      gpu: push(prev?.gpu ?? [], p.gpu ?? 0, PROCESS_HISTORY_LENGTH),
     });
   }
   return {
@@ -75,6 +82,8 @@ export function appendSnapshot(h: History, s: Snapshot, max = HISTORY_LENGTH): H
     netTx: push(h.netTx, s.network.txRate, max),
     diskRead: push(h.diskRead, s.disk.readRate, max),
     diskWrite: push(h.diskWrite, s.disk.writeRate, max),
+    gpu: s.gpus.map((g, i) => push(h.gpu[i] ?? [], g.utilization ?? 0, max)),
+    gpuMemory: s.gpus.map((g, i) => push(h.gpuMemory[i] ?? [], g.memoryUsed ?? 0, max)),
     processes,
   };
 }

@@ -7,7 +7,8 @@
 import type { ProcessRow } from "@/types/models";
 
 export type ViewMode = "tree" | "list" | "apps";
-export type SortKey = "name" | "pid" | "user" | "cpu" | "memory" | "threads" | "disk" | "status";
+export type SortKey =
+  "name" | "pid" | "user" | "cpu" | "gpu" | "memory" | "threads" | "disk" | "status";
 export type SortDir = "asc" | "desc";
 export interface SortState {
   key: SortKey;
@@ -79,6 +80,8 @@ function sortValue(row: ProcessRow, key: SortKey): number | string {
       return (row.user ?? "").toLowerCase();
     case "cpu":
       return row.cpu;
+    case "gpu":
+      return row.gpu ?? -1;
     case "memory":
       return row.memory;
     case "threads":
@@ -239,6 +242,12 @@ export function aggregate(name: string, members: ProcessRow[]): ProcessRow {
     user: users.size === 1 ? first.user : `${users.size} users`,
     status: running ? "running" : first.status,
     cpu: members.reduce((s, m) => s + m.cpu, 0),
+    gpu: members.some((m) => m.gpu !== null)
+      ? Math.min(
+          100,
+          members.reduce((s, m) => s + (m.gpu ?? 0), 0),
+        )
+      : null,
     memory: members.reduce((s, m) => s + m.memory, 0),
     virtualMemory: members.reduce((s, m) => s + m.virtualMemory, 0),
     threads: members.reduce((s, m) => s + (m.threads ?? 0), 0),

@@ -137,6 +137,37 @@ describe("App", () => {
     expect(await screen.findByRole("heading", { name: "Settings" })).toBeInTheDocument();
   });
 
+  it("shows the GPU in the overview, the sidebar and the process list", async () => {
+    render(<App />);
+    await screen.findByText("moonbase");
+    expect(screen.getByRole("region", { name: "GPU: 37.0 %" })).toBeInTheDocument();
+    expect(screen.getByText(/NVIDIA GeForce RTX 4070/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Processes/ }));
+    const table = await screen.findByRole("treegrid", { name: "Process list" });
+    expect(within(table).getByRole("button", { name: "GPU" })).toBeInTheDocument();
+  });
+
+  it("hides the GPU column where the platform can't attribute GPU load", async () => {
+    const noGpu = snapshot({
+      gpus: [],
+      processes: snapshot().processes.map((p) => ({ ...p, gpu: null })),
+    });
+    mockedInvoke.mockImplementation((cmd: string) =>
+      cmd === "system_info"
+        ? Promise.resolve(SYSTEM_INFO)
+        : cmd === "snapshot"
+          ? Promise.resolve(noGpu)
+          : Promise.resolve([]),
+    );
+    render(<App />);
+    await screen.findByText("moonbase");
+    expect(screen.queryByRole("region", { name: /^GPU/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Processes/ }));
+    const table = await screen.findByRole("treegrid", { name: "Process list" });
+    expect(within(table).queryByRole("button", { name: "GPU" })).not.toBeInTheDocument();
+  });
+
   it("reports a backend failure instead of going blank", async () => {
     mockedInvoke.mockImplementation((cmd: string) =>
       cmd === "system_info"

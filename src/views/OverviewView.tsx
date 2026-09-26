@@ -9,6 +9,7 @@ import {
   formatRate,
 } from "@/lib/format";
 import type { ProcessRow, Snapshot, SystemInfo } from "@/types/models";
+import { primaryGpu } from "@/lib/gpu";
 import { MoonPhase } from "@/components/MoonPhase";
 import { Meter, Sparkline } from "@/components/charts";
 import { Card, EmptyState, Facts, OwnerDot } from "@/components/ui";
@@ -37,13 +38,14 @@ export function OverviewView({
   }
 
   const mem = snapshot.memory;
+  const gpu = primaryGpu(snapshot);
   const byCpu = [...snapshot.processes].sort((a, b) => b.cpu - a.cpu).slice(0, 6);
   const byMemory = [...snapshot.processes].sort((a, b) => b.memory - a.memory).slice(0, 6);
   const maxFrequency = Math.max(0, ...snapshot.cpu.cores.map((c) => c.frequency));
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className={`grid gap-4 md:grid-cols-2 ${gpu ? "xl:grid-cols-5" : "xl:grid-cols-4"}`}>
         <StatTile
           label="CPU"
           value={formatPercent(snapshot.cpu.total)}
@@ -74,6 +76,23 @@ export function OverviewView({
         >
           <Sparkline values={history.netRx.map((r, i) => r + (history.netTx[i] ?? 0))} tone={2} />
         </StatTile>
+        {gpu && (
+          <StatTile
+            label="GPU"
+            value={gpu.card.utilization === null ? "–" : formatPercent(gpu.card.utilization)}
+            sub={[
+              gpu.card.name,
+              gpu.card.memoryUsed !== null && gpu.card.memoryTotal !== null
+                ? `${formatBytes(gpu.card.memoryUsed)} / ${formatBytes(gpu.card.memoryTotal)}`
+                : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+            fraction={(gpu.card.utilization ?? 0) / 100}
+          >
+            <Sparkline values={history.gpu[gpu.index] ?? []} max={100} />
+          </StatTile>
+        )}
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
@@ -175,10 +194,12 @@ function StatTile({
   return (
     <section className="mt-glass flex flex-col overflow-hidden" aria-label={`${label}: ${value}`}>
       <div className="flex items-center gap-3 px-4 pt-4">
-        {fraction !== undefined && <MoonPhase fraction={fraction} size={42} />}
+        {fraction !== undefined && <MoonPhase fraction={fraction} size={38} />}
         <div className="min-w-0">
           <h2 className="mt-eyebrow">{label}</h2>
-          <p className="text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
+          <p className="text-[1.4rem] leading-tight font-semibold tracking-tight whitespace-nowrap tabular-nums">
+            {value}
+          </p>
         </div>
       </div>
       <p className="truncate px-4 pt-1 text-xs text-(--mt-text-muted)">{sub}</p>

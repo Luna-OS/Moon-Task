@@ -65,6 +65,7 @@ export function ProcessesView({
     [processes, mode, sort, query, owner, showKernel, collapsed, openGroups],
   );
   const names = useMemo(() => new Map(processes.map((p) => [p.pid, p.name])), [processes]);
+  const showGpu = processes.some((p) => p.gpu !== null);
 
   const selectedRow = rows.find((r) => r.id === selectedId) ?? null;
   // The selection survives filtering and collapsing: look it up in the
@@ -213,6 +214,7 @@ export function ProcessesView({
               sort={sort}
               onSort={sortBy}
               compact={showPanel}
+              showGpu={showGpu}
               onSelect={(row) => onSelect(row.id)}
               onToggle={toggle}
               onEnd={(row, force) => {

@@ -8,6 +8,7 @@
 
 pub mod classify;
 
+use crate::gpu::{GpuMonitor, GpuReading};
 use crate::models::{
     CoreStats, CpuStats, DiskStats, EnvVar, LoadAverage, MemoryStats, NetworkInterface,
     NetworkStats, Owner, ProcessDetails, ProcessRef, ProcessRow, Sensor, Snapshot, SystemInfo,
@@ -54,6 +55,7 @@ pub struct Monitor {
     #[cfg(unix)]
     components: Components,
     users: Users,
+    gpus: GpuMonitor,
     self_pid: u32,
     self_uid: Option<String>,
     last_refresh: Instant,
@@ -87,6 +89,7 @@ impl Monitor {
             #[cfg(unix)]
             components: Components::new_with_refreshed_list(),
             users: Users::new_with_refreshed_list(),
+            gpus: GpuMonitor::new(),
             self_pid,
             self_uid,
             last_refresh: Instant::now(),
@@ -143,7 +146,8 @@ impl Monitor {
             self.users.refresh();
         }
 
-        let (processes, thread_count) = self.process_rows(secs);
+        let gpu = self.gpus.refresh();
+        let (processes, thread_count) = self.process_rows(secs, &gpu);
         let snapshot = Snapshot {
             timestamp: unix_millis(),
             interval_ms: elapsed.as_millis() as u64,
@@ -160,6 +164,7 @@ impl Monitor {
             network: self.network_stats(secs),
             disk: self.disk_stats(secs),
             sensors: self.sensors(),
+            gpus: gpu.gpus,
             process_count: processes.len(),
             thread_count,
             processes,
@@ -192,7 +197,7 @@ impl Monitor {
             .filter(|p| p.thread_kind().is_none())
     }
 
-    fn process_rows(&self, secs: f64) -> (Vec<ProcessRow>, u64) {
+    fn process_rows(&self, secs: f64, gpu: &GpuReading) -> (Vec<ProcessRow>, u64) {
         let cores = self.system.cpus().len().max(1) as f32;
         let pids: Vec<u32> = self.real_processes().map(|p| p.pid().as_u32()).collect();
         let thread_counts = platform::thread_counts(&pids);
@@ -219,6 +224,9 @@ impl Monitor {
                     owner: target.owner,
                     status: p.status().into(),
                     cpu: (p.cpu_usage() / cores).clamp(0.0, 100.0),
+                    gpu: gpu
+                        .per_process_supported
+                        .then(|| gpu.per_process.get(&pid).copied().unwrap_or(0.0)),
                     memory: p.memory(),
                     virtual_memory: p.virtual_memory(),
                     threads,

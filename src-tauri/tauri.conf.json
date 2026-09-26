@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "MoonTask",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "identifier": "io.moontask.app",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -28,6 +28,13 @@
   "bundle": {
     "active": true,
     "targets": ["deb", "rpm", "nsis"],
+    "publisher": "Luna-OS",
+    "homepage": "https://github.com/Luna-OS/Moon-Task",
+    "copyright": "© 2026 Luna",
+    "license": "MIT",
+    "category": "Utility",
+    "shortDescription": "Every process, calmly under the moon.",
+    "longDescription": "MoonTask is a calm, modern task manager: processes as a tree, a list or grouped by app, live CPU, GPU, memory, disk and network charts, open connections and services — with safe, confirmed actions.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -38,6 +45,17 @@
     "macOS": {
       "minimumSystemVersion": "10.15",
       "signingIdentity": "-"
+    },
+    "windows": {
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "headerImage": "installer/header.bmp",
+        "sidebarImage": "installer/sidebar.bmp",
+        "installMode": "currentUser",
+        "languages": ["English", "German"],
+        "displayLanguageSelector": false,
+        "compression": "lzma"
+      }
     }
   }
 }

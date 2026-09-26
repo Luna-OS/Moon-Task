@@ -1,13 +1,20 @@
 import { useState, type ReactNode } from "react";
 import type { History } from "@/lib/history";
 import { formatBytes, formatFrequency, formatPercent, formatRate } from "@/lib/format";
-import type { Snapshot, SystemInfo } from "@/types/models";
-import { AreaChart, Sparkline } from "@/components/charts";
-import { CpuIcon, DiskIcon, MemoryIcon, NetworkIcon, ThermometerIcon } from "@/components/icons";
+import type { Gpu, Snapshot, SystemInfo } from "@/types/models";
+import { AreaChart, Meter, Sparkline } from "@/components/charts";
+import {
+  CpuIcon,
+  DiskIcon,
+  GpuIcon,
+  MemoryIcon,
+  NetworkIcon,
+  ThermometerIcon,
+} from "@/components/icons";
 import { Card, EmptyState, Facts } from "@/components/ui";
 import { Volumes } from "@/views/OverviewView";
 
-type Section = "cpu" | "memory" | "disk" | "network" | "sensors";
+type Section = "cpu" | "memory" | "disk" | "network" | "sensors" | `gpu-${number}`;
 
 export function PerformanceView({
   snapshot,
@@ -63,6 +70,17 @@ export function PerformanceView({
       ),
     },
   ];
+  snapshot.gpus.forEach((gpu, i) => {
+    nav.push({
+      id: `gpu-${i}`,
+      label: snapshot.gpus.length > 1 ? `GPU ${i}` : "GPU",
+      icon: <GpuIcon />,
+      value: [gpu.utilization === null ? null : formatPercent(gpu.utilization, 0), gpu.name]
+        .filter(Boolean)
+        .join(" · "),
+      spark: <Sparkline values={history.gpu[i] ?? []} max={100} height={24} />,
+    });
+  });
   if (snapshot.sensors.length > 0) {
     const hottest = Math.max(...snapshot.sensors.map((s) => s.temperature));
     nav.push({
@@ -107,6 +125,13 @@ export function PerformanceView({
         {section === "disk" && <DiskSection snapshot={snapshot} history={history} />}
         {section === "network" && <NetworkSection snapshot={snapshot} history={history} />}
         {section === "sensors" && <SensorSection snapshot={snapshot} />}
+        {section.startsWith("gpu-") && snapshot.gpus[Number(section.slice(4))] && (
+          <GpuSection
+            gpu={snapshot.gpus[Number(section.slice(4))]}
+            index={Number(section.slice(4))}
+            history={history}
+          />
+        )}
       </div>
     </div>
   );
@@ -323,5 +348,83 @@ function SensorSection({ snapshot }: { snapshot: Snapshot }) {
         })}
       </ul>
     </Card>
+  );
+}
+
+function GpuSection({ gpu, index, history }: { gpu: Gpu; index: number; history: History }) {
+  const facts: [string, string][] = [
+    ["Load", gpu.utilization === null ? "not reported" : formatPercent(gpu.utilization)],
+  ];
+  if (gpu.memoryTotal !== null) {
+    facts.push([
+      "Dedicated memory",
+      gpu.memoryUsed !== null
+        ? `${formatBytes(gpu.memoryUsed)} of ${formatBytes(gpu.memoryTotal)}`
+        : formatBytes(gpu.memoryTotal),
+    ]);
+  }
+  if (gpu.sharedTotal !== null || gpu.sharedUsed !== null) {
+    facts.push([
+      "Shared memory",
+      gpu.sharedTotal !== null
+        ? `${formatBytes(gpu.sharedUsed ?? 0)} of ${formatBytes(gpu.sharedTotal)}`
+        : formatBytes(gpu.sharedUsed ?? 0),
+    ]);
+  }
+  if (gpu.temperature !== null) facts.push(["Temperature", `${gpu.temperature.toFixed(0)} °C`]);
+  if (gpu.vendor) facts.push(["Vendor", gpu.vendor]);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Card title={gpu.name}>
+        {gpu.utilization === null ? (
+          <p className="text-sm text-(--mt-text-muted)">
+            This GPU's driver doesn't report its load. Name, memory and temperature are shown where
+            available.
+          </p>
+        ) : (
+          <AreaChart
+            label="GPU load"
+            series={[{ label: "GPU", values: history.gpu[index] ?? [], tone: 1 }]}
+            timestamps={history.timestamps}
+            max={100}
+            format={(v) => `${v.toFixed(0)} %`}
+            height={200}
+          />
+        )}
+        <div className="mt-4">
+          <Facts items={facts} />
+        </div>
+      </Card>
+      {gpu.engines.length > 0 && (
+        <Card title="Engines">
+          <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-3 p-0">
+            {gpu.engines.map((e) => (
+              <li key={e.name} className="flex flex-col gap-1.5">
+                <span className="flex items-baseline justify-between text-sm">
+                  <span>{e.name}</span>
+                  <span className="font-medium tabular-nums">
+                    {formatPercent(e.utilization, 0)}
+                  </span>
+                </span>
+                <Meter fraction={e.utilization / 100} label={`${e.name} load`} />
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+      {gpu.memoryTotal !== null && gpu.memoryUsed !== null && (
+        <Card title="Dedicated memory">
+          <AreaChart
+            label="Dedicated GPU memory in use"
+            series={[{ label: "In use", values: history.gpuMemory[index] ?? [], tone: 2 }]}
+            timestamps={history.timestamps}
+            max={gpu.memoryTotal}
+            format={(v) => formatBytes(v)}
+            height={140}
+          />
+        </Card>
+      )}
+    </div>
   );
 }

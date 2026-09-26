@@ -60,7 +60,7 @@ export function sanitize(input: Partial<Settings>): Settings {
     input.viewMode === "list" || input.viewMode === "apps" || input.viewMode === "tree"
       ? input.viewMode
       : d.viewMode;
-  const sortKeys = ["name", "pid", "user", "cpu", "memory", "threads", "disk", "status"];
+  const sortKeys = ["name", "pid", "user", "cpu", "gpu", "memory", "threads", "disk", "status"];
   const sort =
     input.sort && sortKeys.includes(input.sort.key) && ["asc", "desc"].includes(input.sort.dir)
       ? input.sort
