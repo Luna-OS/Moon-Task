@@ -18,9 +18,11 @@ use classify::Os;
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+#[cfg(unix)]
+use sysinfo::Components;
 use sysinfo::{
-    Components, DiskKind, Disks, Networks, Pid, Process, ProcessRefreshKind, ProcessesToUpdate,
-    System, UpdateKind, Users,
+    DiskKind, Disks, Networks, Pid, Process, ProcessRefreshKind, ProcessesToUpdate, System,
+    UpdateKind, Users,
 };
 
 /// Below this, CPU usage deltas are meaningless (`sysinfo` needs ~200 ms);
@@ -28,6 +30,7 @@ use sysinfo::{
 const MIN_INTERVAL: Duration = Duration::from_millis(250);
 
 /// Sensors and the user list change rarely; refresh them every N ticks.
+#[cfg(unix)]
 const SLOW_EVERY: u64 = 5;
 const USERS_EVERY: u64 = 60;
 
@@ -47,6 +50,8 @@ pub struct Monitor {
     system: System,
     networks: Networks,
     disks: Disks,
+    /// Temperature sensors; not on Windows (see Cargo.toml).
+    #[cfg(unix)]
     components: Components,
     users: Users,
     self_pid: u32,
@@ -79,6 +84,7 @@ impl Monitor {
             system,
             networks: Networks::new_with_refreshed_list(),
             disks: Disks::new_with_refreshed_list(),
+            #[cfg(unix)]
             components: Components::new_with_refreshed_list(),
             users: Users::new_with_refreshed_list(),
             self_pid,
@@ -129,6 +135,7 @@ impl Monitor {
             .refresh_processes_specifics(ProcessesToUpdate::All, true, list_refresh_kind());
         self.networks.refresh(true);
         self.disks.refresh(true);
+        #[cfg(unix)]
         if self.ticks % SLOW_EVERY == 1 {
             self.components.refresh(true);
         }
@@ -287,6 +294,12 @@ impl Monitor {
         }
     }
 
+    #[cfg(windows)]
+    fn sensors(&self) -> Vec<Sensor> {
+        Vec::new()
+    }
+
+    #[cfg(unix)]
     fn sensors(&self) -> Vec<Sensor> {
         let mut sensors: Vec<Sensor> = self
             .components

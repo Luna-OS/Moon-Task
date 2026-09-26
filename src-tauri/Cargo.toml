@@ -1,6 +1,6 @@
 [package]
 name = "moontask"
-version = "0.1.0"
+version = "0.1.1"
 description = "MoonTask – every process, calmly under the moon. A local, open-source task manager."
 authors = ["MoonTask contributors"]
 license = "MIT"
@@ -37,11 +37,21 @@ tauri = { version = "2.11.6", features = [], optional = true }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 thiserror = "2.0.21"
-sysinfo = "0.39.6"
+# No "component" feature on Windows: sysinfo reads sensors there through
+# WMI, which initializes COM as multithreaded on the calling thread and sets
+# process-wide COM security — both break WebView2, and the app crashed on
+# start. Windows rarely exposes temperatures through WMI anyway.
+sysinfo = { version = "0.39.6", default-features = false, features = [
+  "disk",
+  "network",
+  "system",
+  "user",
+] }
 netstat2 = "0.11.2"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.189"
+sysinfo = { version = "0.39.6", default-features = false, features = ["component"] }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61.2", features = [
