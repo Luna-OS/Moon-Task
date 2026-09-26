@@ -37,7 +37,7 @@ struct MoonPhase: View {
             guard f > 0 else { return }
             let rx = r * abs(1 - 2 * f)
             var lit = Path()
-            lit.addArc(center: center, radius: r, startAngle: .degrees(-90), endAngle: .degrees(90), clockwise: false)
+            lit.addArc(center: center, radius: r, startAngle: .degrees(-90), endAngle: .degrees(90), clockwise: true)
             // Back up along the terminator (an ellipse of width rx).
             let steps = 32
             for i in 0...steps {

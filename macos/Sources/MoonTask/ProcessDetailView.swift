@@ -68,7 +68,7 @@ struct ProcessDetailView: View {
                     .lineLimit(1)
                 HStack(spacing: 6) {
                     OwnerDot(owner: row.owner)
-                    Text("PID \(row.pid) · \(row.user ?? row.owner.label)")
+                    Text(verbatim: "PID \(row.pid) · \(row.user ?? row.owner.label)")
                         .font(.system(size: 11.5))
                         .foregroundStyle(Palette.textMuted)
                     Chip(text: row.state.label, tone: row.state.tone)

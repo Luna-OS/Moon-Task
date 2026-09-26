@@ -36,7 +36,7 @@ struct NetworkView: View {
                     TableColumn("Process", value: \Connection.processName) { c in
                         HStack(spacing: 6) {
                             Text(c.processName).foregroundStyle(Palette.text)
-                            Text("\(c.pid)").font(.figure(11, weight: .regular)).foregroundStyle(Palette.textFaint)
+                            Text(String(c.pid)).font(.figure(11, weight: .regular)).foregroundStyle(Palette.textFaint)
                         }
                     }
                     .width(min: 140, ideal: 200)

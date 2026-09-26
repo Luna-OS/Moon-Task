@@ -2,7 +2,7 @@ import MoonTaskCore
 import SwiftUI
 
 struct SettingsView: View {
-    @AppStorage(SettingKey.theme) private var theme = ThemeChoice.system.rawValue
+    @AppStorage(SettingKey.theme) private var theme = ThemeChoice.dark.rawValue
     @AppStorage(SettingKey.refreshInterval) private var interval = 1.0
     @AppStorage(SettingKey.showKernel) private var showKernel = true
     @AppStorage(SettingKey.confirmOwn) private var confirmOwn = true

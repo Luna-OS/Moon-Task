@@ -104,7 +104,7 @@ struct OverviewView: View {
                                 Image(systemName: e.kind == .started ? "arrow.up.right.circle.fill" : "xmark.circle")
                                     .foregroundStyle(e.kind == .started ? Palette.success : Palette.textFaint)
                                 Text(e.name).foregroundStyle(Palette.text).lineLimit(1)
-                                Text("\(e.pid)").font(.figure(11, weight: .regular)).foregroundStyle(Palette.textFaint)
+                                Text(String(e.pid)).font(.figure(11, weight: .regular)).foregroundStyle(Palette.textFaint)
                                 Spacer()
                                 Text(e.time, style: .time)
                                     .font(.figure(11, weight: .regular))

@@ -83,9 +83,9 @@ struct ProcessesView: View {
             TableColumn("Name", value: \VisibleRow.sortName) { row in
                 NameCell(row: row, isFresh: model.fresh.contains(row.process.identity)) { toggle(row) }
             }
-            .width(min: 200, ideal: 300)
+            .width(min: 160, ideal: 220)
             TableColumn("PID", value: \VisibleRow.sortPid) { row in
-                Text(row.kind == .group ? "" : "\(row.process.pid)")
+                Text(row.kind == .group ? "" : String(row.process.pid))
                     .font(.figure(12, weight: .regular))
                     .foregroundStyle(Palette.textMuted)
             }
@@ -93,7 +93,7 @@ struct ProcessesView: View {
             TableColumn("User", value: \VisibleRow.sortUser) { row in
                 Text(row.process.user ?? "–").foregroundStyle(Palette.textMuted).lineLimit(1)
             }
-            .width(min: 60, ideal: 100, max: 160)
+            .width(min: 60, ideal: 84, max: 160)
             TableColumn("CPU", value: \VisibleRow.sortCPU) { row in
                 HeatCell(text: row.process.cpu < 0.05 ? "0.0" : String(format: "%.1f", row.process.cpu), load: row.process.cpu)
             }

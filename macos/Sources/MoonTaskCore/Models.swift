@@ -334,5 +334,7 @@ public struct LaunchJob: Identifiable, Hashable, Sendable {
 
     public var isRunning: Bool { pid != nil }
     /// Apple's own jobs, which are part of macOS.
-    public var isApple: Bool { label.hasPrefix("com.apple.") }
+    public var isApple: Bool {
+        label.hasPrefix("com.apple.") || label.hasPrefix("application.com.apple.")
+    }
 }

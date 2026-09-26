@@ -6,7 +6,7 @@ import SwiftUI
 struct MoonTaskApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @State private var model = AppModel()
-    @AppStorage(SettingKey.theme) private var theme = ThemeChoice.system.rawValue
+    @AppStorage(SettingKey.theme) private var theme = ThemeChoice.dark.rawValue
 
     var body: some Scene {
         Window("MoonTask", id: "main") {

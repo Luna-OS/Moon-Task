@@ -166,10 +166,13 @@ struct AreaChart: View {
                 .foregroundStyle(by: .value("Series", p.series))
                 .opacity(0.35)
                 .interpolationMethod(.monotone)
-                LineMark(x: .value("Time", p.index), y: .value("Value", p.value))
-                    .foregroundStyle(by: .value("Series", p.series))
-                    .interpolationMethod(.monotone)
-                    .lineStyle(StrokeStyle(lineWidth: 1.5))
+                // Lines don't stack, so stacked charts show the areas only.
+                if !stacked {
+                    LineMark(x: .value("Time", p.index), y: .value("Value", p.value))
+                        .foregroundStyle(by: .value("Series", p.series))
+                        .interpolationMethod(.monotone)
+                        .lineStyle(StrokeStyle(lineWidth: 1.5))
+                }
             }
             if let hover {
                 RuleMark(x: .value("Time", hover))
