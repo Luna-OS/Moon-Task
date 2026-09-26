@@ -29,7 +29,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        # macOS is left out for now; the code for it stays in the tree.
+        os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
@@ -65,7 +66,7 @@ jobs:
 
       # The tests start, suspend and end real (own, harmless) child
       # processes and open a local socket — MoonTask's control paths are
-      # exercised for real on every platform, never mocked.
+      # exercised for real on Linux and Windows, never mocked.
       - name: cargo test
         run: cargo test --manifest-path src-tauri/Cargo.toml
 
@@ -79,8 +80,6 @@ jobs:
             bundles: deb
           - os: windows-latest
             bundles: nsis
-          - os: macos-latest
-            bundles: app
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5

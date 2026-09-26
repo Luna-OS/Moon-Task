@@ -94,8 +94,8 @@ export function SettingsView({
           <div className="flex flex-col gap-3">
             <p className="text-sm text-(--mt-text-muted)">
               MoonTask – every process, calmly under the moon. An open-source task manager for
-              Windows, macOS and Linux. It only ever talks to your own machine: no telemetry, no
-              network access of its own.
+              Windows and Linux. It only ever talks to your own machine: no telemetry, no network
+              access of its own.
             </p>
             <Facts
               items={[

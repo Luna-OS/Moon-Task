@@ -2,7 +2,7 @@
 
 > Every process, calmly under the moon.
 
-MoonTask is a modern, open-source task manager for Windows, macOS and Linux — in the spirit of
+MoonTask is a modern, open-source task manager for Windows and Linux — in the spirit of
 [TaskExplorer](https://github.com/DavidXanatos/TaskExplorer) and Process Explorer, but calmer,
 better organized and in the same night-sky design as [MoonDisk](https://github.com/Luna-OS/MoonDisk).
 
@@ -29,8 +29,8 @@ better organized and in the same night-sky design as [MoonDisk](https://github.c
 - **Performance** — CPU (total and per core), memory and swap, disk and network throughput over
   time with hover read-outs, volumes, and temperature sensors
 - **Network** — every open TCP/UDP connection and listening port, with the process holding it
-- **Services** — systemd services (Linux), Windows services and launchd jobs (macOS): state,
-  startup type, main process; start, stop and restart
+- **Services** — systemd services (Linux) and Windows services: state, startup type, main
+  process; start, stop and restart
 - Night and day themes (or follow the system), adjustable refresh rate, pause, and full
   keyboard control
 
@@ -50,7 +50,7 @@ Ending the wrong process can lose unsaved work or take the system down. MoonTask
 design, and the rules live in the Rust core (`src-tauri/src/control/guard.rs`), not only in the
 UI:
 
-- **Protected processes** — the kernel, init/launchd, the Windows session processes (csrss,
+- **Protected processes** — the kernel, init, the Windows session processes (csrss,
   wininit, lsass, …) and MoonTask itself can't be ended, suspended or re-prioritized
 - **Confirmation** — ending someone else's or a system process, ending a whole tree, and every
   service change always need an explicit confirmation; for your own processes it's a setting
@@ -75,8 +75,7 @@ UI:
 
 ## Installation
 
-Installers for Windows (`.exe`), macOS (`.dmg`, Apple Silicon and Intel) and Linux
-(`.deb`/`.rpm`) are published on the [Releases](https://github.com/Luna-OS/Moon-Task/releases)
+Installers for Windows (`.exe`) and Linux (`.deb`/`.rpm`) are published on the [Releases](https://github.com/Luna-OS/Moon-Task/releases)
 page.
 
 MoonTask runs as a normal user. It then sees every process, but can only act on your own and
@@ -84,23 +83,22 @@ can't look inside other users' processes (their modules, handles and environment
 everything, start it with administrator rights (Windows: *Run as administrator*; Linux:
 e.g. `sudo -E moontask`).
 
-On macOS the app isn't notarized by Apple yet: open **System Settings → Privacy & Security**
-and click **Open Anyway** the first time. macOS only lets debuggers look at another process'
-threads, modules and handles, so those tabs stay empty there.
+A macOS version is planned. The macOS code paths (libproc, launchd) are already in the tree
+but aren't built, tested or released yet.
 
 ## Platform notes
 
-| Feature                       | Linux | Windows | macOS |
-|-------------------------------|:-----:|:-------:|:-----:|
-| Process tree, CPU, memory, disk I/O | ✓ | ✓ | ✓ |
-| End, kill, end tree           | ✓     | ✓ (end = kill) | ✓ |
-| Suspend / resume              | ✓     | ✓       | ✓     |
-| Priority                      | ✓ (nice) | ✓ (priority class) | ✓ (nice) |
-| Threads / modules             | ✓     | ✓       | –     |
-| Open handles                  | ✓     | planned | –     |
-| Network connections           | ✓     | ✓       | ✓     |
-| Services                      | systemd | Service Control Manager | launchd (user) |
-| Temperatures                  | ✓     | where exposed | ✓ |
+| Feature                       | Linux | Windows |
+|-------------------------------|:-----:|:-------:|
+| Process tree, CPU, memory, disk I/O | ✓ | ✓ |
+| End, kill, end tree           | ✓     | ✓ (end = kill) |
+| Suspend / resume              | ✓     | ✓       |
+| Priority                      | ✓ (nice, all threads) | ✓ (priority class) |
+| Threads / modules             | ✓     | ✓       |
+| Open handles                  | ✓     | planned |
+| Network connections           | ✓     | ✓       |
+| Services                      | systemd | Service Control Manager |
+| Temperatures                  | ✓     | where exposed |
 
 ## Development
 
@@ -112,7 +110,7 @@ src-tauri/src/
   monitor/    the live view of the machine (sysinfo), rates, owner/protection rules
   control/    process actions and their risk guard
   platform/   everything OS-specific: signals, priorities, threads, modules, handles
-  services/   systemd / Windows SCM / launchd
+  services/   systemd / Windows SCM (launchd for later)
   network/    open sockets
   commands/   the thin Tauri IPC layer
 src/
